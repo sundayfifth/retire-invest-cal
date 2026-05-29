@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>STAR CHECK-IN · วางแผนเกษียณ & ประเมินความเสี่ยง</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F3EAD9;--paper-2:#EFE4CE;--ink:#21385A;--line:rgba(33,56,90,.32);
+    --line-strong:rgba(33,56,90,.65);--accent:#B07A3C;--field:#FBF6EC;--shadow:rgba(33,56,90,.10);
+    --green:#3F8F63;--amber:#D89A3A;--orange:#E07B39;--red:#C0492F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{font-family:"IBM Plex Sans Thai",sans-serif;color:var(--ink);
+    background:radial-gradient(120% 120% at 50% -10%, #F8F1E2 0%, var(--paper) 45%, var(--paper-2) 100%);
+    min-height:100vh;padding:28px 16px 80px;line-height:1.5;}
+  .sheet{max-width:780px;margin:0 auto;background:linear-gradient(180deg,#F7EFE0,#F2E8D5);
+    border:1px solid var(--line);border-radius:26px;padding:40px 38px 50px;position:relative;
+    box-shadow:0 30px 60px -30px var(--shadow), inset 0 0 0 9px rgba(255,255,255,.18);}
+  .sheet::before{content:"";position:absolute;inset:14px;border:1px solid var(--line);border-radius:16px;pointer-events:none}
+
+  .tabs{display:flex;gap:8px;justify-content:center;margin-bottom:30px;position:relative;z-index:2;flex-wrap:wrap}
+  .tab{font-family:"IBM Plex Sans Thai";font-size:14.5px;font-weight:500;color:rgba(33,56,90,.55);
+    background:transparent;border:1px solid var(--line);border-radius:30px;padding:9px 20px;cursor:pointer;transition:all .18s;}
+  .tab:hover{color:var(--ink);border-color:var(--line-strong)}
+  .tab.active{color:var(--paper);background:var(--ink);border-color:var(--ink);box-shadow:0 8px 18px -10px rgba(33,56,90,.6)}
+
+  .page{display:none;animation:fade .4s ease}
+  .page.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  .title{font-family:"Cormorant Garamond",serif;text-align:center;font-weight:600;letter-spacing:.2em;
+    font-size:clamp(40px,10vw,68px);line-height:.95;color:var(--ink)}
+  .subtitle{text-align:center;font-size:14px;letter-spacing:.03em;color:rgba(33,56,90,.7);margin-top:6px;font-weight:300}
+
+  .flight{margin:34px 0 8px;position:relative}
+  .rail{position:relative;height:52px;margin:0 8%}
+  .rail .line{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--line-strong);transform:translateY(-50%)}
+  .rail .dot{position:absolute;top:50%;width:9px;height:9px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%)}
+  .rail .dot.l{left:0}.rail .dot.r{left:100%}
+  .rail .ico{position:absolute;bottom:100%;transform:translateX(-50%);margin-bottom:2px;color:var(--ink)}
+  .rail .ico.l{left:0}.rail .ico.m{left:50%;transform:translate(-50%,4px)}.rail .ico.r{left:100%}
+  .stages{display:grid;grid-template-columns:repeat(3,1fr);text-align:center;gap:10px;margin-top:2px}
+  .stage h3{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:clamp(19px,4.2vw,27px);letter-spacing:.1em}
+  .stage .th{font-size:14.5px;color:rgba(33,56,90,.78);margin-top:-2px}
+  .stage .field-wrap{margin-top:13px}
+  label.cap{display:block;font-size:13px;color:rgba(33,56,90,.7);margin-bottom:5px}
+
+  input[type=number],input[type=text]{width:100%;font-family:"IBM Plex Sans Thai";font-size:18px;font-weight:500;color:var(--ink);
+    background:var(--field);border:1.4px solid var(--line);border-radius:12px;padding:11px 12px;text-align:center;outline:none;
+    transition:border-color .15s,box-shadow .15s,background .15s;-moz-appearance:textfield}
+  input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  input:focus{border-color:var(--ink);box-shadow:0 0 0 3px rgba(33,56,90,.12);background:#fff}
+  input::placeholder{color:rgba(33,56,90,.32);font-weight:400}
+
+  .derived{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:24px 12% 6px;text-align:center}
+  .derived .box{background:rgba(33,56,90,.05);border:1px dashed var(--line);border-radius:12px;padding:10px 8px}
+  .derived .num{font-family:"Cormorant Garamond",serif;font-size:30px;font-weight:600;line-height:1}
+  .derived .lab{font-size:12.5px;color:rgba(33,56,90,.72);margin-top:4px}
+
+  .divider{height:1px;background:var(--line);margin:32px 0 28px}
+  .sec-h{font-size:21px;font-weight:600;margin-bottom:4px}
+  .sec-sub{font-size:13px;color:rgba(33,56,90,.65);margin-bottom:18px}
+
+  .exp-row{display:grid;grid-template-columns:1.15fr 1.7fr;align-items:center;gap:14px;margin-bottom:13px}
+  .exp-row .name{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:21px;letter-spacing:.05em}
+  .exp-row .name .th{font-family:"IBM Plex Sans Thai";font-size:12.5px;font-weight:400;letter-spacing:0;color:rgba(33,56,90,.6);display:block;margin-top:-2px}
+  .inwrap{position:relative}
+  .inwrap .unit{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:13px;color:rgba(33,56,90,.45);pointer-events:none}
+  .inwrap input{text-align:right;padding-right:54px}
+
+  .grp-med{border:1px solid var(--line);border-radius:14px;padding:16px 16px 6px;margin:6px 0 4px;background:rgba(255,255,255,.22)}
+  .grp-med .glabel{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:21px;letter-spacing:.05em;margin-bottom:12px}
+  .grp-med .glabel .inf{font-family:"IBM Plex Sans Thai";font-size:11px;font-weight:500;color:var(--accent);background:rgba(176,122,60,.12);border:1px solid rgba(176,122,60,.3);border-radius:20px;padding:1px 8px;margin-left:6px;vertical-align:middle}
+  .med-line{display:grid;grid-template-columns:1.15fr 1.7fr;align-items:center;gap:14px;margin-bottom:13px}
+  .med-line .nm{font-size:14px;font-weight:500;color:rgba(33,56,90,.85)}
+  .med-line .nm small{display:block;font-size:11.5px;font-weight:400;color:rgba(33,56,90,.55)}
+
+  .exp-row.total{margin-top:8px;border-top:1.4px solid var(--line);padding-top:15px}
+  .exp-row.total .name{font-size:23px}
+  .exp-row.total .val{text-align:right;font-family:"Cormorant Garamond",serif;font-weight:600;font-size:25px;padding-right:14px}
+  .exp-row.total .val small{font-family:"IBM Plex Sans Thai";font-size:13px;font-weight:400;color:rgba(33,56,90,.5)}
+
+  .adv{margin-top:20px;border:1px dashed var(--line);border-radius:14px;padding:2px 16px;background:rgba(255,255,255,.25)}
+  .adv summary{cursor:pointer;padding:12px 0;font-size:14px;font-weight:500;list-style:none;display:flex;align-items:center;gap:8px}
+  .adv summary::-webkit-details-marker{display:none}
+  .adv summary .chev{transition:transform .2s;color:var(--accent)}
+  .adv[open] summary .chev{transform:rotate(90deg)}
+  .adv .body{padding:4px 0 14px}
+  .adv .field-line{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .adv .field-line label{font-size:14px;color:rgba(33,56,90,.82);min-width:210px}
+  .adv .field-line .inwrap{width:110px}
+  .adv .field-line input{text-align:center;padding-right:30px}
+  .adv .field-line .unit{right:11px}
+  select{font-family:"IBM Plex Sans Thai";font-size:14px;color:var(--ink);background:var(--field);
+    border:1.4px solid var(--line);border-radius:10px;padding:9px 12px;outline:none}
+  .adv .hint{font-size:12.5px;color:rgba(33,56,90,.6);margin-top:4px;line-height:1.55}
+
+  .cta{margin:28px auto 0;display:block;width:100%;max-width:340px;font-family:"IBM Plex Sans Thai";font-size:18px;font-weight:600;
+    letter-spacing:.1em;color:var(--paper);background:var(--ink);border:none;border-radius:40px;padding:16px;cursor:pointer;
+    box-shadow:0 14px 26px -12px rgba(33,56,90,.6);transition:transform .12s,box-shadow .12s}
+  .cta:hover{transform:translateY(-2px);box-shadow:0 18px 30px -12px rgba(33,56,90,.7)}
+  .cta:active{transform:translateY(0)}
+  .err{color:#a23b2e;font-size:13.5px;text-align:center;margin-top:14px;min-height:1em}
+
+  .result{margin-top:0;border:1.6px solid var(--ink);border-radius:20px;
+    background:linear-gradient(180deg,rgba(33,56,90,.045),rgba(33,56,90,.02));overflow:hidden;
+    max-height:0;opacity:0;padding:0 28px;border-width:0;transition:max-height .5s,opacity .4s,padding .4s,margin .4s,border-width .4s}
+  .result.show{max-height:2200px;opacity:1;padding:32px 28px;border-width:1.6px;margin-top:34px}
+  .result .glab{text-align:center;font-size:16px;color:rgba(33,56,90,.8)}
+  .result .gnum{text-align:center;font-family:"Cormorant Garamond",serif;font-weight:700;font-size:clamp(40px,11vw,66px);line-height:1.04;margin:6px 0 2px}
+  .result .gnum .b{font-size:.42em;font-weight:500;letter-spacing:.04em;margin-left:6px;color:rgba(33,56,90,.7)}
+  .result .gmm{text-align:center;font-size:15px;color:var(--accent);font-weight:600;margin-bottom:22px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+  .stat{background:rgba(255,255,255,.4);border:1px solid var(--line);border-radius:13px;padding:13px 12px;text-align:center}
+  .stat .n{font-family:"Cormorant Garamond",serif;font-size:22px;font-weight:600;line-height:1}
+  .stat .l{font-size:12px;color:rgba(33,56,90,.7);margin-top:5px}
+  .chart-h{font-size:14px;font-weight:600;margin-bottom:6px}
+  .chart-sub{font-size:12px;color:rgba(33,56,90,.6);margin-bottom:12px}
+  svg.chart{width:100%;height:auto;display:block;overflow:visible}
+  .legend{display:flex;gap:18px;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:12.5px;color:rgba(33,56,90,.75)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}.legend i{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .breakdown{margin-top:20px;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:rgba(33,56,90,.82);line-height:1.7}
+  .breakdown table{width:100%;border-collapse:collapse;margin-top:8px}
+  .breakdown td{padding:4px 0;border-bottom:1px dotted var(--line)}
+  .breakdown td:last-child{text-align:right;font-variant-numeric:tabular-nums}
+  .breakdown .note{margin-top:12px;font-size:12px;color:rgba(33,56,90,.65);background:rgba(176,122,60,.08);border:1px solid rgba(176,122,60,.25);border-radius:10px;padding:10px 12px;line-height:1.6}
+
+  .foot{font-size:12.5px;color:rgba(33,56,90,.62);margin-top:28px;line-height:1.6}
+
+  .risk-hero{text-align:center;margin-bottom:8px}
+  .risk-hero .kicker{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);font-weight:600}
+  .risk-hero h2{font-family:"Cormorant Garamond",serif;font-size:clamp(30px,7vw,46px);font-weight:600;line-height:1.05;margin:4px 0}
+  .risk-hero p{font-size:14px;color:rgba(33,56,90,.7);margin-top:4px}
+  .q{margin-top:24px}
+  .q .qhead{display:flex;gap:10px;align-items:flex-start;margin-bottom:12px}
+  .q .qnum{flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);
+    font-family:"Cormorant Garamond",serif;font-weight:600;font-size:15px;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .q .qtext{font-size:15.5px;font-weight:500;line-height:1.4}
+  .opts{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;padding-left:36px}
+  .opt{font-family:"IBM Plex Sans Thai";text-align:left;font-size:13.5px;color:var(--ink);background:var(--field);
+    border:1.4px solid var(--line);border-radius:11px;padding:11px 13px;cursor:pointer;transition:all .15s;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .opt:hover{border-color:var(--line-strong)}
+  .opt .sc{font-family:"Cormorant Garamond",serif;font-weight:600;font-size:14px;color:rgba(33,56,90,.4);flex:0 0 auto}
+  .opt.sel{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .opt.sel .sc{color:rgba(255,255,255,.7)}
+
+  .score-bar{position:sticky;bottom:14px;margin-top:30px;background:var(--ink);color:var(--paper);
+    border-radius:16px;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;
+    box-shadow:0 16px 30px -14px rgba(33,56,90,.7);z-index:3}
+  .score-bar .lab{font-size:13.5px;opacity:.85}
+  .score-bar .val{font-family:"Cormorant Garamond",serif;font-size:30px;font-weight:600}
+  .score-bar .val small{font-size:15px;opacity:.6}
+  .score-bar button{font-family:"IBM Plex Sans Thai";font-size:15px;font-weight:600;letter-spacing:.04em;
+    background:var(--paper);color:var(--ink);border:none;border-radius:30px;padding:11px 22px;cursor:pointer;transition:transform .12s}
+  .score-bar button:hover{transform:translateY(-2px)}
+  .score-bar button:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+  .risk-result{margin-top:26px;border-radius:20px;overflow:hidden;max-height:0;opacity:0;transition:max-height .6s,opacity .4s,margin .4s}
+  .risk-result.show{max-height:2600px;opacity:1}
+  .rr-head{padding:28px 26px;color:#fff;text-align:center}
+  .rr-head .en{font-family:"Cormorant Garamond",serif;letter-spacing:.12em;font-size:16px;opacity:.9}
+  .rr-head .name{font-size:clamp(26px,6vw,38px);font-weight:600;margin:2px 0 6px}
+  .rr-head .sc{font-size:14px;opacity:.92}
+  .rr-head .desc{font-size:14px;opacity:.95;margin-top:10px;max-width:460px;margin-left:auto;margin-right:auto;line-height:1.55}
+  .rr-body{background:linear-gradient(180deg,rgba(33,56,90,.045),rgba(33,56,90,.02));border:1.6px solid var(--ink);border-top:none;
+    border-radius:0 0 20px 20px;padding:26px;display:grid;grid-template-columns:200px 1fr;gap:26px 26px;align-items:center}
+  .rr-body .donutwrap{text-align:center}
+  .rr-body .alloc-h{font-size:15px;font-weight:600;margin-bottom:12px}
+  .alloc-list{list-style:none}
+  .alloc-list li{display:flex;align-items:center;gap:10px;font-size:14px;padding:6px 0;border-bottom:1px dotted var(--line)}
+  .alloc-list li i{width:13px;height:13px;border-radius:3px;flex:0 0 auto}
+  .alloc-list li .pct{margin-left:auto;font-family:"Cormorant Garamond",serif;font-weight:600;font-size:17px}
+  .fitnote{font-size:13px;color:rgba(33,56,90,.78);background:rgba(255,255,255,.4);border:1px solid var(--line);border-radius:12px;padding:12px 14px;grid-column:1/-1}
+  .protect{grid-column:1/-1;display:flex;gap:12px;align-items:flex-start;background:rgba(33,56,90,.05);border:1px solid var(--line);border-radius:12px;padding:14px;font-size:13px;line-height:1.55}
+  .retake{display:block;margin:18px auto 0;background:none;border:1px solid var(--line);color:rgba(33,56,90,.7);
+    font-family:"IBM Plex Sans Thai";font-size:13.5px;border-radius:30px;padding:9px 20px;cursor:pointer}
+  .retake:hover{border-color:var(--ink);color:var(--ink)}
+
+  .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:6px}
+  .lv-card{background:rgba(255,255,255,.4);border:1px solid var(--line);border-radius:14px;padding:14px 12px;text-align:center}
+  .lv-donut{width:94px;height:94px;display:block;margin:0 auto 6px}
+  .lv-name{font-size:13px;font-weight:600;line-height:1.25}
+  .lv-en{font-family:"Cormorant Garamond",serif;font-size:12px;color:rgba(33,56,90,.6);margin-bottom:3px}
+  .lv-sc{font-size:11.5px;color:var(--accent);font-weight:600;margin-bottom:9px}
+  .lv-legend{font-size:11.5px;text-align:left}
+  .lv-row{display:flex;align-items:center;gap:6px;padding:2px 0}
+  .lv-row i{width:10px;height:10px;border-radius:2px;flex:0 0 auto}
+  .lv-row span{flex:1}.lv-row b{font-family:"Cormorant Garamond",serif;font-size:13px}
+  .alloc-foot{font-size:11.5px;color:rgba(33,56,90,.6);margin-top:14px;line-height:1.55;text-align:center;max-width:640px;margin-left:auto;margin-right:auto}
+
+  .stamp{position:absolute;right:24px;bottom:16px;width:110px;height:110px;color:rgba(33,56,90,.42);pointer-events:none}
+
+  @media(max-width:600px){
+    .sheet{padding:30px 18px 40px;border-radius:20px}
+    .rail{margin:0 4%}.derived{margin:20px 0 6px}
+    .exp-row,.med-line{grid-template-columns:1fr;gap:6px}
+    .stats{grid-template-columns:1fr}.stat{display:flex;justify-content:space-between;text-align:left;padding:11px 14px}.stat .l{margin-top:0}
+    .opts{grid-template-columns:1fr;padding-left:0}
+    .rr-body{grid-template-columns:1fr}
+    .levels{grid-template-columns:repeat(2,1fr)}
+    .adv .field-line label{min-width:0}
+    .stamp{display:none}
+  }
+</style>
+</head>
+<body>
+<main class="sheet">
+
+  <div class="tabs">
+    <button class="tab active" data-tab="plan">&#9992; วางแผนเกษียณ</button>
+    <button class="tab" data-tab="risk">&#9670; ประเมินความเสี่ยง</button>
+  </div>
+
+  <!-- ============ PLAN ============ -->
+  <section class="page active" id="page-plan">
+    <h1 class="title">PLAN</h1>
+    <p class="subtitle">วางแผนเกษียณ · ปรับค่าเงินเฟ้อแล้ว</p>
+
+    <div class="flight">
+      <div class="rail">
+        <div class="line"></div><span class="dot l"></span><span class="dot r"></span>
+        <span class="ico l"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19zm19.57-9.36c-.21-.8-1.04-1.28-1.84-1.06L14.92 9.6 8.46 3.57 6.54 4.08l3.92 6.78-4.5 1.21-1.79-1.39-1.45.39 1.82 3.16.77 1.33 1.6-.43 5.31-1.42 4.35-1.16 5.16-1.38c.81-.23 1.28-1.05 1.07-1.86z"/></svg></span>
+        <span class="ico m"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path transform="rotate(45 12 12)" d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg></span>
+        <span class="ico r"><svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 19h19v2h-19zm16.84-5.65c.8.21 1.62-.26 1.84-1.06.21-.8-.26-1.62-1.06-1.84l-5.31-1.42-2.76-9.02L10.12 0v8.28L5.15 6.95l-.93-2.32-1.45-.39v5.16c0 .71.47 1.29 1.13 1.47z"/></svg></span>
+      </div>
+      <div class="stages">
+        <div class="stage"><h3>TAKE OFF</h3><div class="th">ตอนนี้</div>
+          <div class="field-wrap"><label class="cap">อายุ</label><input id="ageNow" type="number" inputmode="numeric" min="0" max="120" placeholder="26"></div></div>
+        <div class="stage"><h3>FLYING</h3><div class="th">เกษียณ</div>
+          <div class="field-wrap"><label class="cap">อายุ</label><input id="ageRetire" type="number" inputmode="numeric" min="0" max="120" placeholder="60"></div></div>
+        <div class="stage"><h3>LANDING</h3><div class="th">เสียชีวิต</div>
+          <div class="field-wrap"><label class="cap">อายุ</label><input id="ageDeath" type="number" inputmode="numeric" min="0" max="120" placeholder="85"></div></div>
+      </div>
+      <div class="derived">
+        <div class="box"><div class="num" id="yrAcc">–</div><div class="lab">ปีสะสมเงิน</div></div>
+        <div class="box"><div class="num" id="yrSpend">–</div><div class="lab">ปีใช้เงิน (นับรวมปีเกษียณ)</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="sec-h">ค่าใช้จ่ายปัจจุบัน (ต่อปี)</div>
+    <div class="sec-sub">กรอกเป็นค่าเงินวันนี้ ระบบจะปรับเงินเฟ้อให้อัตโนมัติ</div>
+
+    <div class="exp-row">
+      <div class="name">LIVING<span class="th">ค่าใช้จ่ายดำรงชีพ</span></div>
+      <div class="inwrap"><input id="living" type="number" inputmode="numeric" min="0" placeholder="360,000"><span class="unit">บาท/ปี</span></div>
+    </div>
+    <div class="exp-row">
+      <div class="name">LIFESTYLE<span class="th">ไลฟ์สไตล์ / ท่องเที่ยว</span></div>
+      <div class="inwrap"><input id="lifestyle" type="number" inputmode="numeric" min="0" placeholder="0"><span class="unit">บาท/ปี</span></div>
+    </div>
+
+    <div class="grp-med">
+      <div class="glabel">MEDICAL<span class="inf">เฟ้อ 8%</span></div>
+      <div class="med-line">
+        <div class="nm">ค่ารักษาพยาบาล<small>ค่าใช้จ่ายต่อปี (เกิดทุกปี)</small></div>
+        <div class="inwrap"><input id="medAnnual" type="number" inputmode="numeric" min="0" placeholder="12,000"><span class="unit">บาท/ปี</span></div>
+      </div>
+      <div class="med-line">
+        <div class="nm">ค่ารักษาโรคร้าย<small>ก้อนสำรอง (ครั้งเดียว)</small></div>
+        <div class="inwrap"><input id="medCritical" type="number" inputmode="numeric" min="0" placeholder="6,000,000"><span class="unit">บาท</span></div>
+      </div>
+    </div>
+
+    <div class="exp-row total">
+      <div class="name">TOTAL<span class="th">ค่าใช้จ่ายต่อปี (ไม่รวมก้อนโรคร้าย)</span></div>
+      <div class="val"><span id="totalYr">0</span> <small>บาท/ปี</small></div>
+    </div>
+
+    <details class="adv">
+      <summary><span class="chev">›</span> ตั้งค่าสมมติฐาน (ปรับได้)</summary>
+      <div class="body">
+        <div class="field-line"><label>อัตราเงินเฟ้อทั่วไป (Living/Lifestyle)</label>
+          <div class="inwrap"><input id="genInf" type="number" inputmode="decimal" min="0" max="20" step="0.5" value="2"><span class="unit">%</span></div></div>
+        <div class="field-line"><label>อัตราเงินเฟ้อค่ารักษาพยาบาล</label>
+          <div class="inwrap"><input id="medInf" type="number" inputmode="decimal" min="0" max="20" step="0.5" value="8"><span class="unit">%</span></div></div>
+        <div class="field-line"><label>วิธีคิดก้อนค่ารักษาโรคร้าย</label>
+          <select id="ciMode">
+            <option value="today">มูลค่าวันนี้ (ครั้งเดียว)</option>
+            <option value="retire">ปรับเงินเฟ้อถึงวันเกษียณ</option>
+          </select></div>
+        <div class="hint">โมเดล: ปรับค่าใช้จ่ายปัจจุบันให้โตด้วยเงินเฟ้อไปจนถึง “วันเกษียณ” แล้วคูณด้วยจำนวนปีที่ใช้เงิน (นับรวมตั้งแต่ปีเกษียณถึงปีสุดท้าย) = เงินก้อนที่ต้องเตรียม ณ วันเกษียณ ถอดจากตรรกะของ Planner_Tools</div>
+      </div>
+    </details>
+
+    <button class="cta" id="calcBtn">คำนวณ →</button>
+    <div class="err" id="err"></div>
+
+    <section class="result" id="result">
+      <div class="glab">เงินวางแผนเกษียณ — เป้าหมาย ณ วันเกษียณ</div>
+      <div class="gnum"><span id="goal">0</span><span class="b">บาท</span></div>
+      <div class="gmm" id="goalMM"></div>
+      <div class="stats">
+        <div class="stat"><div class="n" id="sAcc">0</div><div class="l">ต้องเก็บเฉลี่ย/เดือน</div></div>
+        <div class="stat"><div class="n" id="sFirst">0</div><div class="l">ค่าใช้จ่ายปีเกษียณปีแรก</div></div>
+        <div class="stat"><div class="n" id="sMed">0</div><div class="l">หมวดค่ารักษา</div></div>
+      </div>
+      <div class="chart-h">สัดส่วนเงินก้อนเป้าหมาย แยกตามหมวด</div>
+      <div class="chart-sub">หมวดค่ารักษา (รวมโรคร้าย) มักกินสัดส่วนสูงเพราะเงินเฟ้อ 8%</div>
+      <svg class="chart" id="chart" viewBox="0 0 600 86" preserveAspectRatio="none"></svg>
+      <div class="legend" id="legend"></div>
+      <div class="breakdown" id="breakdown"></div>
+    </section>
+
+    <p class="foot">*ยังไม่รวมค่า Maintenance / ค่าประกันบ้านและรถ และค่าใช้จ่ายอื่น ๆ ตามบุคคล · เป็นการประมาณการเพื่อการวางแผน ไม่ใช่คำแนะนำการลงทุน</p>
+    <svg class="stamp" viewBox="0 0 120 120">
+      <defs><path id="cTop" d="M60,60 m-44,0 a44,44 0 1,1 88,0"/><path id="cBot" d="M60,60 m44,0 a44,44 0 1,1 -88,0"/></defs>
+      <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="60" cy="60" r="46" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3"/>
+      <text font-family="Cormorant Garamond,serif" font-size="9.5" letter-spacing="2" fill="currentColor"><textPath href="#cTop" startOffset="50%" text-anchor="middle">STAR CHECK-IN</textPath></text>
+      <text font-family="Cormorant Garamond,serif" font-size="9.5" letter-spacing="2" fill="currentColor"><textPath href="#cBot" startOffset="50%" text-anchor="middle">STAR CHECK-IN</textPath></text>
+      <text x="60" y="56" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="600" font-size="13" letter-spacing="1.5" fill="currentColor">PLANNING</text>
+      <text x="60" y="71" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="600" font-size="13" letter-spacing="1.5" fill="currentColor">IN PROGRESS</text>
+    </svg>
+  </section>
+
+  <!-- ============ RISK ============ -->
+  <section class="page" id="page-risk">
+    <div class="risk-hero">
+      <div class="kicker">Know Your Risk</div>
+      <h2>เข้าใจ “ความเสี่ยง” ของตัวเอง</h2>
+      <p>ตอบ 7 ข้อ เพื่อประเมินระดับความเสี่ยงที่คุณรับได้</p>
+    </div>
+    <div id="quiz"></div>
+    <div class="score-bar">
+      <div><div class="lab">คะแนนรวม</div><div class="val"><span id="score">0</span><small> / 28</small></div></div>
+      <button id="seeResult" disabled>ดูผลประเมิน</button>
+    </div>
+    <div class="risk-result" id="riskResult">
+      <div class="rr-head" id="rrHead">
+        <div class="en" id="rrEn"></div>
+        <div class="name" id="rrName"></div>
+        <div class="sc" id="rrSc"></div>
+        <div class="desc" id="rrDesc"></div>
+      </div>
+      <div class="rr-body">
+        <div class="donutwrap"><svg id="donut" width="180" height="180" viewBox="0 0 180 180"></svg></div>
+        <div>
+          <div class="alloc-h">ตัวอย่างการจัดสรรสินทรัพย์ (Asset Allocation)</div>
+          <ul class="alloc-list">
+            <li><i style="background:#21385A"></i> ตราสารหนี้ / เงินฝาก <span class="pct" id="aBond"></span></li>
+            <li><i style="background:#3F8F63"></i> หุ้น <span class="pct" id="aStock"></span></li>
+            <li><i style="background:#B07A3C"></i> สินทรัพย์ทางเลือก <span class="pct" id="aAlt"></span></li>
+          </ul>
+        </div>
+        <div class="fitnote" id="rrFit"></div>
+        <div class="protect">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#21385A" stroke-width="1.6" style="flex:0 0 auto;margin-top:1px"><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/></svg>
+          <div><strong>ลงทุนอย่างมีวินัย ควบคู่กับ Wealth Protection</strong> — ความเสี่ยงที่ใหญ่ที่สุดอาจไม่ได้มาจากตลาด แต่มาจากชีวิต การมีประกันสุขภาพ/โรคร้าย/ชีวิต ช่วยให้พอร์ตเดินหน้าต่อได้แม้เจอเหตุไม่คาดฝัน</div>
+        </div>
+      </div>
+      <button class="retake" id="retake">ทำแบบประเมินใหม่</button>
+    </div>
+
+    <div class="divider"></div>
+    <div class="sec-h" style="text-align:center">ตัวอย่างการจัดสรรสินทรัพย์ทั้ง 4 ระดับ</div>
+    <div class="sec-sub" style="text-align:center">Asset Allocation ตามระดับความเสี่ยง — ค่อย ๆ ลดสินทรัพย์ปลอดภัย เพิ่มน้ำหนักหุ้น</div>
+    <div class="levels" id="levels"></div>
+    <p class="alloc-foot">หมายเหตุ: สัดส่วนนี้เป็นตัวอย่างเพื่อการสื่อสารเบื้องต้น ประยุกต์จากแนวทาง Asset Allocation ของ SET InvestNow และแบบประเมินความเหมาะสมในการลงทุนของสำนักงาน ก.ล.ต. สัดส่วนจริงอาจปรับตามเป้าหมาย ระยะเวลาลงทุน สภาพคล่อง และข้อจำกัดของผู้ลงทุนแต่ละราย</p>
+  </section>
+
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const num=el=>{const v=parseFloat(($(el).value||"").toString().replace(/,/g,""));return isNaN(v)?null:v;};
+const f=n=>Math.round(n).toLocaleString("en-US");
+const fmm=n=>(n/1e6).toLocaleString("th-TH",{maximumFractionDigits:2});
+
+/* tabs */
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active");
+  $("page-"+t.dataset.tab).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}));
+
+/* ===== PLAN ===== */
+function refreshDerived(){
+  const a=num("ageNow"),r=num("ageRetire"),d=num("ageDeath");
+  $("yrAcc").textContent=(a!=null&&r!=null&&r>a)?(r-a):"–";
+  $("yrSpend").textContent=(r!=null&&d!=null&&d>r)?(d-r+1):"–";
+  const t=(num("living")||0)+(num("lifestyle")||0)+(num("medAnnual")||0);
+  $("totalYr").textContent=f(t);
+}
+["ageNow","ageRetire","ageDeath","living","lifestyle","medAnnual","medCritical"].forEach(id=>$(id).addEventListener("input",refreshDerived));
+
+function calc(){
+  const err=$("err");err.textContent="";
+  const a=num("ageNow"),r=num("ageRetire"),d=num("ageDeath");
+  const living=num("living")||0,lifestyle=num("lifestyle")||0;
+  const medA=num("medAnnual")||0,medC=num("medCritical")||0;
+  const gen=(num("genInf")||0)/100,med=(num("medInf")||0)/100;
+  const ciMode=$("ciMode").value;
+
+  if(a==null||r==null||d==null){err.textContent="กรุณากรอกอายุให้ครบทั้ง 3 ช่อง";return;}
+  if(r<=a){err.textContent="อายุเกษียณต้องมากกว่าอายุตอนนี้";return;}
+  if(d<=r){err.textContent="อายุเสียชีวิตต้องมากกว่าอายุเกษียณ";return;}
+  if(living+lifestyle+medA+medC<=0){err.textContent="กรุณากรอกค่าใช้จ่ายอย่างน้อย 1 ช่อง";return;}
+
+  const A=r-a, N=d-r+1;
+  const gF=Math.pow(1+gen,A), mF=Math.pow(1+med,A);
+  const needLiving=living*gF*N, needLife=lifestyle*gF*N, needMedA=medA*mF*N;
+  const needCI=ciMode==="retire"?medC*mF:medC;
+  const needMed=needMedA+needCI;
+  const goal=needLiving+needLife+needMed;
+  const firstYear=(living+lifestyle)*gF+medA*mF;
+  const perMonth=goal/(A*12);
+
+  $("goal").textContent=f(goal);
+  $("goalMM").textContent="≈ "+fmm(goal)+" ล้านบาท";
+  $("sAcc").textContent=f(perMonth);
+  $("sFirst").textContent=f(firstYear);
+  $("sMed").textContent=f(needMed);
+
+  $("breakdown").innerHTML=
+    '<table>'+
+    '<tr><td>Living (ดำรงชีพ)</td><td>'+f(needLiving)+'</td></tr>'+
+    '<tr><td>Lifestyle (ไลฟ์สไตล์)</td><td>'+f(needLife)+'</td></tr>'+
+    '<tr><td>ค่ารักษาพยาบาล (รายปี)</td><td>'+f(needMedA)+'</td></tr>'+
+    '<tr><td>ค่ารักษาโรคร้าย (ก้อนเดียว'+(ciMode==="retire"?" · เฟ้อถึงเกษียณ":"")+')</td><td>'+f(needCI)+'</td></tr>'+
+    '<tr style="font-weight:600"><td>รวมเป้าหมาย</td><td>'+f(goal)+'</td></tr>'+
+    '</table>'+
+    '<div class="note">สมมติฐาน: สะสม <strong>'+A+' ปี</strong> · ใช้เงิน <strong>'+N+' ปี</strong> (นับรวมตั้งแต่ปีเกษียณถึงปีสุดท้าย) · เงินเฟ้อทั่วไป '+(gen*100)+'% · เงินเฟ้อค่ารักษา '+(med*100)+'%. แต่ละหมวดถูกปรับเงินเฟ้อไปถึงวันเกษียณ แล้วคูณจำนวนปีที่ใช้เงิน. ต้องเก็บเฉลี่ย ~<strong>'+f(perMonth)+' บาท/เดือน</strong> ตลอดช่วงสะสม (ยังไม่รวมผลตอบแทนจากการลงทุน ซึ่งจะช่วยให้เก็บน้อยลง).</div>';
+
+  drawBar([
+    {label:"Living",v:needLiving,c:"#21385A"},
+    {label:"Lifestyle",v:needLife,c:"#5B6E8C"},
+    {label:"ค่ารักษา",v:needMed,c:"#B07A3C"}
+  ]);
+  $("result").classList.add("show");
+  $("result").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function drawBar(parts){
+  const tot=parts.reduce((s,p)=>s+p.v,0)||1;
+  let x=0,W=600,bars="",leg="";
+  parts.forEach(p=>{const w=W*p.v/tot;
+    if(w>0.5)bars+='<rect x="'+x.toFixed(1)+'" y="18" width="'+Math.max(0,w-2).toFixed(1)+'" height="46" rx="6" fill="'+p.c+'"/>';
+    if(w>56)bars+='<text x="'+(x+w/2).toFixed(1)+'" y="46" fill="#fff" font-size="13" font-family="IBM Plex Sans Thai" text-anchor="middle">'+Math.round(100*p.v/tot)+'%</text>';
+    x+=w;
+    leg+='<span><i style="background:'+p.c+'"></i>'+p.label+'</span>';
+  });
+  $("chart").innerHTML=bars;
+  $("legend").innerHTML=leg;
+}
+$("calcBtn").addEventListener("click",calc);
+refreshDerived();
+
+/* ===== RISK ===== */
+const QUESTIONS=[
+  {q:"หากพอร์ตการลงทุนของคุณลดลง 20% คุณจะรู้สึกอย่างไร?",o:[["ตกใจ ขายทันที",1],["กังวลมาก",2],["ยอมรับได้",3],["เฉย ๆ มองเป็นโอกาส",4]]},
+  {q:"คุณลงทุนเพื่อเป้าหมายระยะใด?",o:[["ระยะสั้น ไม่เกิน 1 ปี",1],["1–3 ปี",2],["3–10 ปี",3],["มากกว่า 10 ปี",4]]},
+  {q:"รายได้ของคุณมั่นคงแค่ไหน?",o:[["ไม่แน่นอน",1],["พอประมาณ",2],["ค่อนข้างมั่นคง",3],["มั่นคงมาก",4]]},
+  {q:"หนี้สินของคุณเป็นอย่างไร?",o:[["มีหนี้สูง",1],["มีบ้าง",2],["น้อย",3],["แทบไม่มี",4]]},
+  {q:"คุณมีเงินสำรองฉุกเฉินกี่เดือน?",o:[["น้อยกว่า 3 เดือน",1],["3–6 เดือน",2],["6–12 เดือน",3],["มากกว่า 12 เดือน",4]]},
+  {q:"หากลงทุน คุณยอมรับการขาดทุนสูงสุดได้เท่าไหร่?",o:[["ไม่อยากขาดทุนเลย",1],["ไม่เกิน 10%",2],["10–20%",3],["มากกว่า 20%",4]]},
+  {q:"ประสบการณ์การลงทุนของคุณ?",o:[["ไม่เคย",1],["น้อย",2],["พอสมควร",3],["มาก",4]]}
+];
+const BANDS=[
+  {min:7,max:10,en:"Conservative",name:"เสี่ยงต่ำ",color:"#3F8F63",desc:"เน้นความมั่นคง ปกป้องเงินต้นเป็นหลัก",alloc:[70,20,10],fit:"เหมาะกับผู้ที่ต้องการความมั่นคง รับความเสี่ยงได้น้อย เน้นรักษาเงินต้น"},
+  {min:11,max:17,en:"Moderate",name:"เสี่ยงปานกลาง",color:"#D89A3A",desc:"ต้องการความสมดุลระหว่างความเสี่ยงและผลตอบแทน",alloc:[50,30,20],fit:"เหมาะกับผู้ที่รับความเสี่ยงได้ระดับหนึ่ง ต้องการพอร์ตที่สมดุลระหว่างการเติบโตและความมั่นคง"},
+  {min:18,max:23,en:"Moderate to High",name:"เสี่ยงปานกลางค่อนข้างสูง",color:"#E07B39",desc:"ยอมรับความผันผวนได้ค่อนข้างมาก เน้นเพิ่มโอกาสรับผลตอบแทนระยะกลาง-ยาว",alloc:[30,50,20],fit:"เหมาะกับผู้ที่รับความผันผวนได้ค่อนข้างมาก ต้องการเพิ่มโอกาสรับผลตอบแทนในระยะกลางถึงยาว และยอมรับการปรับตัวขึ้นลงของมูลค่าพอร์ตได้มากกว่าระดับปานกลาง"},
+  {min:24,max:28,en:"Aggressive",name:"เสี่ยงสูง",color:"#C0492F",desc:"รับความเสี่ยงได้สูง มุ่งหวังผลตอบแทนที่เติบโตในระยะยาว",alloc:[10,70,20],fit:"เหมาะกับผู้ที่รับความเสี่ยงได้สูง มุ่งผลตอบแทนเติบโตในระยะยาว ยอมรับความผันผวนสูงได้"}
+];
+const answers=new Array(QUESTIONS.length).fill(0);
+
+(function buildQuiz(){
+  const wrap=$("quiz");
+  QUESTIONS.forEach((Q,qi)=>{
+    const div=document.createElement("div");div.className="q";
+    let opts="";
+    Q.o.forEach(([t,s],oi)=>{opts+='<button class="opt" data-q="'+qi+'" data-s="'+s+'" data-o="'+oi+'"><span>'+t+'</span><span class="sc">'+s+'</span></button>';});
+    div.innerHTML='<div class="qhead"><div class="qnum">'+(qi+1)+'</div><div class="qtext">'+Q.q+'</div></div><div class="opts">'+opts+'</div>';
+    wrap.appendChild(div);
+  });
+  wrap.querySelectorAll(".opt").forEach(btn=>btn.addEventListener("click",()=>{
+    const qi=+btn.dataset.q;
+    btn.parentElement.querySelectorAll(".opt").forEach(b=>b.classList.remove("sel"));
+    btn.classList.add("sel");
+    answers[qi]=+btn.dataset.s;
+    $("score").textContent=answers.reduce((a,b)=>a+b,0);
+    $("seeResult").disabled=answers.some(a=>a===0);
+  }));
+})();
+
+function donutSeg(alloc,colors,cx,cy,r,sw){
+  const C=2*Math.PI*r;let off=0,seg="";
+  alloc.forEach((p,i)=>{const len=C*p/100;
+    seg+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+colors[i]+'" stroke-width="'+sw+'" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"/>';
+    off+=len;});
+  return seg;
+}
+function donut(alloc,colors){return donutSeg(alloc,colors,90,90,62,28);}
+const ALLOC_C=["#21385A","#3F8F63","#B07A3C"];
+(function renderLevels(){
+  const L=["หนี้/ฝาก","หุ้น","ทางเลือก"];let html="";
+  BANDS.forEach(b=>{
+    let legend="";
+    b.alloc.forEach((p,i)=>{legend+='<div class="lv-row"><i style="background:'+ALLOC_C[i]+'"></i><span>'+L[i]+'</span><b>'+p+'%</b></div>';});
+    html+='<div class="lv-card" style="border-top:3px solid '+b.color+'">'
+      +'<svg viewBox="0 0 120 120" class="lv-donut">'+donutSeg(b.alloc,ALLOC_C,60,60,40,18)
+      +'<text x="60" y="63" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="600" font-size="15" fill="'+b.color+'">'+b.alloc[1]+'%</text>'
+      +'<text x="60" y="78" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="8.5" fill="rgba(33,56,90,.55)">หุ้น</text></svg>'
+      +'<div class="lv-name" style="color:'+b.color+'">'+b.name+'</div>'
+      +'<div class="lv-en">'+b.en+'</div>'
+      +'<div class="lv-sc">'+b.min+'–'+b.max+' คะแนน</div>'
+      +'<div class="lv-legend">'+legend+'</div></div>';
+  });
+  $("levels").innerHTML=html;
+})();
+function showResult(){
+  const total=answers.reduce((a,b)=>a+b,0);
+  const band=BANDS.find(b=>total>=b.min&&total<=b.max);
+  $("rrHead").style.background="linear-gradient(135deg,"+band.color+","+band.color+"cc)";
+  $("rrEn").textContent=band.en;
+  $("rrName").textContent=band.name;
+  $("rrSc").textContent=total+" / 28 คะแนน";
+  $("rrDesc").textContent=band.desc;
+  $("aBond").textContent=band.alloc[0]+"%";
+  $("aStock").textContent=band.alloc[1]+"%";
+  $("aAlt").textContent=band.alloc[2]+"%";
+  $("rrFit").textContent=band.fit;
+  $("donut").innerHTML=donut(band.alloc,["#21385A","#3F8F63","#B07A3C"])
+    +'<text x="90" y="86" text-anchor="middle" font-family="Cormorant Garamond,serif" font-weight="600" font-size="15" fill="#21385A">'+band.en+'</text>'
+    +'<text x="90" y="104" text-anchor="middle" font-family="IBM Plex Sans Thai" font-size="11" fill="rgba(33,56,90,.6)">'+total+'/28</text>';
+  $("riskResult").classList.add("show");
+  $("riskResult").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("seeResult").addEventListener("click",showResult);
+$("retake").addEventListener("click",()=>{
+  answers.fill(0);
+  document.querySelectorAll(".opt").forEach(b=>b.classList.remove("sel"));
+  $("score").textContent="0";
+  $("seeResult").disabled=true;
+  $("riskResult").classList.remove("show");
+  window.scrollTo({top:0,behavior:"smooth"});
+});
+</script>
+</body>
+</html>
